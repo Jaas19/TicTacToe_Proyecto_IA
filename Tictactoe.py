@@ -517,31 +517,33 @@ class TicTacToeGame(QWidget):
         color = ""
         
         if winner == "X":
-            self.defeat_sound.play()
             self.scores["X"] += 1
             self.status_label.setText("¡GANADOR: X!")
             self.status_label.setStyleSheet("color: #FF0066; letter-spacing: 2px;") # Rojo Neón
             color = "#FF0066"
 
             if self.game_mode == "ai":
+                self.defeat_sound.play()
                 title_text = "DERROTA"  # La IA (X) ganó
                 quote_text = self.phrase_generator.generar_burla()
             else:
+                self.victory_sound.play()
                 title_text = "¡GANA X!"
                 quote_text = "El jugador X domina la arena."
 
 
         elif winner == "O":
-            self.victory_sound.play()
             self.scores["O"] += 1
             self.status_label.setText("¡GANADOR: O!")
             self.status_label.setStyleSheet("color: #00FFFF; letter-spacing: 2px;") # Azul Neón
             color = "#00FFFF"
 
             if self.game_mode == "ai":
+                self.victory_sound.play()
                 title_text = "VICTORIA"  # El jugador (O) ganó
                 quote_text = self.phrase_generator.generar_respeto()
             else:
+                self.victory_sound.play()
                 title_text = "¡GANA O!"
                 quote_text = "El jugador 0 demuestra su poder."
 
