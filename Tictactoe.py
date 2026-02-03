@@ -622,20 +622,6 @@ class MainWindow(QMainWindow):
         self.show_menu()
         
         # Lógica de arrastre de ventana
-        self.old_pos = None
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.old_pos = event.globalPos()
-
-    def mouseMoveEvent(self, event):
-        if self.old_pos:
-            delta = event.globalPos() - self.old_pos
-            self.move(self.x() + delta.x(), self.y() + delta.y())
-            self.old_pos = event.globalPos()
-
-    def mouseReleaseEvent(self, event):
-        self.old_pos = None
 
     def show_menu(self):
         self.stacked_widget.setCurrentWidget(self.main_menu)
