@@ -1,14 +1,19 @@
 import sys
+import os
 import random
 import numpy as np
 import tensorflow as tf
 from PySide6.QtGui import QFont, QColor, QPainter, QPen, QIcon
+from PySide6.QtMultimedia import QSoundEffect
 from PySide6.QtWidgets import (QApplication, QWidget, QGridLayout, QPushButton, 
                                QMessageBox, QVBoxLayout, QLabel, QStackedWidget, QMainWindow, QGraphicsDropShadowEffect, QHBoxLayout)
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, QUrl
+
 
 # Cargar el modelo entrenado
-MODEL_PATH = "tictactoe_ia.h5"
+# MODEL_PATH = "tictactoe_ia.h5"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "tictactoe_ia.h5")
 try:
     model = tf.keras.models.load_model(MODEL_PATH, compile=False)
 except Exception as e:
@@ -52,6 +57,7 @@ class NeonButton(QPushButton):
         
         if self.start_game_callback and self.mode:
             self.clicked.connect(lambda: self.start_game_callback(self.mode))
+
 
 class MainMenu(QWidget):
     def __init__(self, start_game_callback):
@@ -109,7 +115,7 @@ class MainMenu(QWidget):
         self.setLayout(layout)
 
         # Título
-        title = QLabel("TIC-TAC-TOE")
+        title = QLabel("OXIA")
         title.setAlignment(Qt.AlignCenter)
         font = QFont("Arial", 32, QFont.Bold)
         title.setFont(font)
@@ -312,7 +318,26 @@ class TicTacToeGame(QWidget):
         self.color_x = "#FF0064" # Rojo Neón
         self.color_o = "#00C8FF" # Azul Neón
         self.color_white = "white"
-        
+
+        # Sonido de Click
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        ruta_sonido = os.path.join(BASE_DIR, "click.wav")
+        self.sonido_clic = QSoundEffect()
+        self.sonido_clic.setSource(QUrl.fromLocalFile(ruta_sonido))
+        self.sonido_clic.setVolume(1.0)  # Volumen al máximo (0.0 a 1.0)
+
+        # Sonido de Victoria
+        ruta_win = os.path.join(BASE_DIR, "win.wav")
+        self.sonido_ganar = QSoundEffect()
+        self.sonido_ganar.setSource(QUrl.fromLocalFile(ruta_win))
+        self.sonido_ganar.setVolume(1.0)
+
+        # Sonido de Derrota
+        ruta_lose = os.path.join(BASE_DIR, "lose.wav")
+        self.sonido_perder = QSoundEffect()
+        self.sonido_perder.setSource(QUrl.fromLocalFile(ruta_lose))
+        self.sonido_perder.setVolume(1.0)
+
         # Puntuaciones
         self.scores = {"X": 0, "O": 0}
         
@@ -387,6 +412,8 @@ class TicTacToeGame(QWidget):
         
         if self.game_mode == "ai" and self.turn != "user":
             return
+
+        self.sonido_clic.play()
 
         # Realizar movimiento
         self.board[idx] = list(current_marker)
@@ -477,14 +504,17 @@ class TicTacToeGame(QWidget):
         self.game_over = True
         
         if winner == "X":
+            self.sonido_perder.play()
             self.scores["X"] += 1
             self.status_label.setText("¡GANADOR: X!")
             self.status_label.setStyleSheet("color: #FF0066; letter-spacing: 2px;") # Rojo Neón
         elif winner == "O":
+            self.sonido_ganar.play()
             self.scores["O"] += 1
             self.status_label.setText("¡GANADOR: O!")
             self.status_label.setStyleSheet("color: #00FFFF; letter-spacing: 2px;") # Azul Neón
         else: # Empate
+            self.sonido_perder.play()
             self.status_label.setText("¡EMPATE!")
             self.status_label.setStyleSheet("color: white; letter-spacing: 2px;")
         
@@ -500,7 +530,7 @@ class TicTacToeGame(QWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("TicTacToe")
+        self.setWindowTitle("OXIA")
         self.setFixedSize(440, 600) # Resolución compacta
         self.setWindowFlags(Qt.FramelessWindowHint) # Sin bordes
         
