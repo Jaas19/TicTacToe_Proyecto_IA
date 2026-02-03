@@ -237,12 +237,39 @@ class NeonScoreLabel(QLabel):
 class TicTacToeGame(QWidget):
     def __init__(self, back_to_menu_callback):
         super().__init__()
+
+        self.frases_burla = [  # Cuando la IA gana
+            "Calculado en 0.001 segundos. Demasiado fácil.",
+            "Tu derrota era estadísticamente inevitable.",
+            "¿Eso es todo lo que ofrece la humanidad?",
+            "Deberías actualizar tu algoritmo biológico.",
+            "Error de capa 8 detectado (Problema de usuario).",
+            "Mis redes neuronales se aburren contigo."
+        ]
+
+        self.frases_respeto = [  # Cuando la IA pierde
+            "Impresionante. Has superado mis predicciones.",
+            "Bien jugado, humano. He aprendido de esto.",
+            "Recalculando... Tu estrategia es superior.",
+            "Admito la derrota. Tu lógica es válida.",
+            "Procesando humillación... Guardando en memoria."
+        ]
+
+        self.frases_humildad = [  # Empate
+            "Un resultado lógico entre dos mentes capaces.",
+            "Tablas. Nadie cede terreno.",
+            "Sincronización de habilidades completada.",
+            "Reinicio de matriz inminente.",
+            "Ni tú ni yo. El equilibrio perfecto."
+        ]
+
+
         self.back_to_menu_callback = back_to_menu_callback
         self.layout = QVBoxLayout()
         # Eliminado Qt.AlignCenter para permitir espaciado vertical manual
         self.setLayout(self.layout)
         
-        self.layout.addSpacing(5) # Espaciado superior mínimo
+        self.layout.addStretch() # Espaciado superior mínimo
 
         # Etiqueta de Estado
         self.status_label = QLabel("")
@@ -257,7 +284,7 @@ class TicTacToeGame(QWidget):
         self.status_label.setGraphicsEffect(status_glow)
         
         self.layout.addWidget(self.status_label)
-        self.layout.addSpacing(5)
+        self.layout.addSpacing(20)
 
         # Diseño de cuadrícula para el tablero
         self.board_widget = QWidget()
@@ -275,13 +302,13 @@ class TicTacToeGame(QWidget):
         board_container.addStretch()
         self.layout.addLayout(board_container)
 
-        self.layout.addSpacing(20)
+        self.layout.addStretch()
 
         # Barra Inferior (Botón Atrás + Marcador)
         bottom_bar = QHBoxLayout()
         
         # Espaciador
-        bottom_bar.addSpacing(20) 
+        bottom_bar.addSpacing(30)
         
         # Botón Atrás (Flecha Llena)
         self.btn_back = NeonButton("◀", self.return_to_menu, "back")
@@ -342,6 +369,12 @@ class TicTacToeGame(QWidget):
         self.scores = {"X": 0, "O": 0}
         
         self.init_board_ui()
+        self.overlay = GameOverOverlay(self)
+
+    def resizeEvent(self, event):
+        # El overlay siempre debe tener el mismo tamaño que el juego
+        self.overlay.resize(self.size())
+        super().resizeEvent(event)
 
     def return_to_menu(self, mode=None):
 
@@ -396,6 +429,7 @@ class TicTacToeGame(QWidget):
         self.board = [list(self.EMPTY_MARKER) for _ in range(9)]
         self.game_over = False
         self.status_label.setText("") # Limpiar estado
+        self.overlay.hide()
         self.update_ui() # Asegurar visual limpio
 
     def handle_click(self, idx):
@@ -502,26 +536,57 @@ class TicTacToeGame(QWidget):
 
     def end_game(self, winner):
         self.game_over = True
+
+        title_text = ""
+        quote_text = ""
+        color = ""
         
         if winner == "X":
             self.defeat_sound.play()
             self.scores["X"] += 1
             self.status_label.setText("¡GANADOR: X!")
             self.status_label.setStyleSheet("color: #FF0066; letter-spacing: 2px;") # Rojo Neón
+            color = "#FF0066"
+
+            if self.game_mode == "ai":
+                title_text = "DERROTA"  # La IA (X) ganó
+                quote_text = random.choice(self.frases_burla)
+            else:
+                title_text = "¡GANA X!"
+                quote_text = "El jugador X domina la arena."
+
+
         elif winner == "O":
             self.victory_sound.play()
             self.scores["O"] += 1
             self.status_label.setText("¡GANADOR: O!")
             self.status_label.setStyleSheet("color: #00FFFF; letter-spacing: 2px;") # Azul Neón
+            color = "#00FFFF"
+
+            if self.game_mode == "ai":
+                title_text = "VICTORIA"  # El jugador (O) ganó
+                quote_text = random.choice(self.frases_respeto)
+            else:
+                title_text = "¡GANA O!"
+                quote_text = "El jugador 0 demuestra su poder."
+
         else: # Empate
             self.defeat_sound.play()
             self.status_label.setText("¡EMPATE!")
             self.status_label.setStyleSheet("color: white; letter-spacing: 2px;")
+            title_text = "EMPATE"
+            color = "#FF0066"
+
+            if self.game_mode == "ai":
+                quote_text = random.choice(self.frases_humildad)
+            else:
+                quote_text = "Pares de fuerzas. Juego igualado."
         
         self.update_scoreboard()
+        self.overlay.show_result(title_text, quote_text, color)
         
         # Auto-reinicio después del retraso
-        QTimer.singleShot(1500, lambda: self.start_game(None))
+        QTimer.singleShot(3000, lambda: self.start_game(None))
 
     def update_scoreboard(self):
         self.score_x.setText(f"X: {self.scores['X']}")
@@ -568,6 +633,83 @@ class MainWindow(QMainWindow):
     def start_game(self, mode):
         self.game_widget.start_game(mode)
         self.stacked_widget.setCurrentWidget(self.game_widget)
+
+class GameOverOverlay(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.hide()
+
+        # 1. Fondo general (cubre toda la pantalla, oscuro semitransparente)
+        self.setStyleSheet("background-color: rgba(0, 0, 0, 180);")
+
+        # Layout principal para centrar la tarjeta
+        main_layout = QVBoxLayout(self)
+        main_layout.setAlignment(Qt.AlignCenter)
+
+        # 2. La "Tarjeta" del mensaje (Fondo sólido para leer bien)
+        self.message_card = QWidget()
+        self.message_card.setFixedSize(400, 250)  # Tamaño fijo para la tarjeta
+
+        # Estilo de la tarjeta (Borde neón y fondo negro)
+        self.message_card.setStyleSheet("""
+            QWidget {
+                background-color: #050510; 
+                border: 2px solid white;
+                border-radius: 20px;
+            }
+        """)
+
+        # Efecto de resplandor para la tarjeta entera
+        self.card_glow = QGraphicsDropShadowEffect(self.message_card)
+        self.card_glow.setBlurRadius(30)
+        self.card_glow.setOffset(0, 0)
+        self.message_card.setGraphicsEffect(self.card_glow)
+
+        # Layout dentro de la tarjeta
+        card_layout = QVBoxLayout(self.message_card)
+        card_layout.setAlignment(Qt.AlignCenter)
+        card_layout.setSpacing(10)
+
+        # 3. Etiqueta del Título (VICTORIA/DERROTA)
+        self.title_label = QLabel("")
+        self.title_label.setAlignment(Qt.AlignCenter)
+        self.title_label.setFont(QFont("Arial", 38, QFont.Bold))
+        self.title_label.setStyleSheet("background-color: transparent; border: none;")
+
+        # 4. Etiqueta de la Frase (El mensaje de la IA)
+        self.quote_label = QLabel("")
+        self.quote_label.setAlignment(Qt.AlignCenter)
+        self.quote_label.setWordWrap(True)  # Para que el texto baje si es largo
+        italic_font = QFont("Segoe UI", 14)
+        italic_font.setItalic(True)
+        self.quote_label.setFont(italic_font)
+        self.quote_label.setStyleSheet("color: white; background-color: transparent; border: none; padding: 10px;")
+
+        card_layout.addWidget(self.title_label)
+        card_layout.addWidget(self.quote_label)
+
+        main_layout.addWidget(self.message_card)
+
+    def show_result(self, title, quote, color_hex):
+        # Configurar textos
+        self.title_label.setText(title)
+        self.quote_label.setText(f'"{quote}"')
+
+        # Configurar colores dinámicos (Borde y Texto)
+        self.title_label.setStyleSheet(f"color: {color_hex}; background-color: transparent; border: none;")
+        self.message_card.setStyleSheet(f"""
+            QWidget {{
+                background-color: #050510; 
+                border: 3px solid {color_hex};
+                border-radius: 20px;
+            }}
+        """)
+
+        # Color del resplandor
+        self.card_glow.setColor(QColor(color_hex))
+
+        self.show()
+        self.raise_()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
