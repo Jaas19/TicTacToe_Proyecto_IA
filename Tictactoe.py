@@ -320,23 +320,23 @@ class TicTacToeGame(QWidget):
         self.color_white = "white"
 
         # Sonido de Click
-        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-        ruta_sonido = os.path.join(BASE_DIR, "click.wav")
-        self.sonido_clic = QSoundEffect()
-        self.sonido_clic.setSource(QUrl.fromLocalFile(ruta_sonido))
-        self.sonido_clic.setVolume(1.0)  # Volumen al máximo (0.0 a 1.0)
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__)) + "/sounds/"
+        sound_route = os.path.join(BASE_DIR, "click.wav")
+        self.click_sound = QSoundEffect()
+        self.click_sound.setSource(QUrl.fromLocalFile(sound_route))
+        self.click_sound.setVolume(1.0)  # Volumen al máximo (0.0 a 1.0)
 
         # Sonido de Victoria
-        ruta_win = os.path.join(BASE_DIR, "win.wav")
-        self.sonido_ganar = QSoundEffect()
-        self.sonido_ganar.setSource(QUrl.fromLocalFile(ruta_win))
-        self.sonido_ganar.setVolume(1.0)
+        victory_route = os.path.join(BASE_DIR, "win.wav")
+        self.victory_sound = QSoundEffect()
+        self.victory_sound.setSource(QUrl.fromLocalFile(victory_route))
+        self.victory_sound.setVolume(1.0)
 
         # Sonido de Derrota
-        ruta_lose = os.path.join(BASE_DIR, "lose.wav")
-        self.sonido_perder = QSoundEffect()
-        self.sonido_perder.setSource(QUrl.fromLocalFile(ruta_lose))
-        self.sonido_perder.setVolume(1.0)
+        defeat_route = os.path.join(BASE_DIR, "lose.wav")
+        self.defeat_sound = QSoundEffect()
+        self.defeat_sound.setSource(QUrl.fromLocalFile(defeat_route))
+        self.defeat_sound.setVolume(1.0)
 
         # Puntuaciones
         self.scores = {"X": 0, "O": 0}
@@ -413,7 +413,7 @@ class TicTacToeGame(QWidget):
         if self.game_mode == "ai" and self.turn != "user":
             return
 
-        self.sonido_clic.play()
+        self.click_sound.play()
 
         # Realizar movimiento
         self.board[idx] = list(current_marker)
@@ -504,17 +504,17 @@ class TicTacToeGame(QWidget):
         self.game_over = True
         
         if winner == "X":
-            self.sonido_perder.play()
+            self.defeat_sound.play()
             self.scores["X"] += 1
             self.status_label.setText("¡GANADOR: X!")
             self.status_label.setStyleSheet("color: #FF0066; letter-spacing: 2px;") # Rojo Neón
         elif winner == "O":
-            self.sonido_ganar.play()
+            self.victory_sound.play()
             self.scores["O"] += 1
             self.status_label.setText("¡GANADOR: O!")
             self.status_label.setStyleSheet("color: #00FFFF; letter-spacing: 2px;") # Azul Neón
         else: # Empate
-            self.sonido_perder.play()
+            self.defeat_sound.play()
             self.status_label.setText("¡EMPATE!")
             self.status_label.setStyleSheet("color: white; letter-spacing: 2px;")
         
@@ -531,7 +531,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("OXIA")
-        self.setFixedSize(440, 600) # Resolución compacta
+        self.showFullScreen()
+        # self.setFixedSize(440, 600) # Resolución compacta
         self.setWindowFlags(Qt.FramelessWindowHint) # Sin bordes
         
         self.stacked_widget = QStackedWidget()
